@@ -7,8 +7,9 @@ import { Search } from "lucide-react";
 import StockChart from "@/components/StockChart";
 import NewsTimeline from "@/components/NewsTimeline";
 import AnalysisCard from "@/components/AnalysisCard";
-import PriceAlerts from "@/components/PriceAlerts"; // Added import
-import { fetchStockData, fetchNews, fetchAnalysis } from "@/lib/api";
+import PriceAlerts from "@/components/PriceAlerts";
+import EarningsDates from "@/components/EarningsDates";
+import { fetchStockData, fetchNews, fetchAnalysis, fetchEarningsDates } from "@/lib/api";
 
 export default function Dashboard() {
   const [ticker, setTicker] = useState("AAPL");
@@ -28,6 +29,12 @@ export default function Dashboard() {
   const { data: analysis, isLoading: analysisLoading } = useQuery({
     queryKey: ["/api/analysis", ticker],
     queryFn: () => fetchAnalysis(ticker),
+    enabled: !!ticker,
+  });
+
+  const { data: earningsDates, isLoading: earningsLoading } = useQuery({
+    queryKey: ["/api/earnings", ticker],
+    queryFn: () => fetchEarningsDates(ticker),
     enabled: !!ticker,
   });
 
@@ -51,16 +58,28 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>Price History</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <StockChart data={stockData} isLoading={stockLoading} />
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Price History</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <StockChart data={stockData} isLoading={stockLoading} />
+                </CardContent>
+              </Card>
+            </div>
 
+            <div>
+              <EarningsDates 
+                ticker={ticker}
+                dates={earningsDates}
+                isLoading={earningsLoading}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <Card>
               <CardHeader>
                 <CardTitle>AI Analysis</CardTitle>
@@ -69,10 +88,6 @@ export default function Dashboard() {
                 <AnalysisCard analysis={analysis} isLoading={analysisLoading} />
               </CardContent>
             </Card>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <PriceAlerts ticker={ticker} />
 
             <Card>
               <CardHeader>
@@ -83,6 +98,8 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </div>
+
+          <PriceAlerts ticker={ticker} />
         </div>
       </div>
     </div>

@@ -195,6 +195,31 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.get("/api/earnings/:ticker", async (req, res) => {
+    try {
+      const { ticker } = req.params;
+      const symbol = ticker.toUpperCase();
+      const response = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`);
+
+      if (response.data?.chart?.result?.[0]?.meta?.earningsDate) {
+        const earningsDate = response.data.chart.result[0].meta.earningsDate;
+        // Get up to 3 upcoming earnings dates
+        const dates = Array.isArray(earningsDate) ? 
+          earningsDate.slice(0, 3).map((timestamp: number) => ({
+            date: new Date(timestamp * 1000).toISOString(),
+            estimate: 'TBD'  // Yahoo Finance API doesn't provide EPS estimates in this endpoint
+          })) : [];
+        res.json(dates);
+      } else {
+        res.json([]);
+      }
+    } catch (error) {
+      console.error('Error fetching earnings dates:', error);
+      res.status(500).json({ error: "Failed to fetch earnings dates" });
+    }
+  });
+
+
   const httpServer = createServer(app);
 
   // Set up WebSocket server
