@@ -43,6 +43,7 @@ async function callOllama(request: OllamaRequest) {
 async function fetchRealStockData(ticker: string) {
   try {
     const symbol = ticker.toUpperCase();
+    // Yahoo Finance API endpoint
     const response = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1mo&interval=1d`);
 
     if (response.data?.chart?.result?.[0]) {
@@ -82,6 +83,7 @@ async function checkStockPrice(ticker: string): Promise<StockPrice> {
     throw new Error('Invalid data format from Yahoo Finance');
   } catch (error) {
     console.error('Error checking stock price:', error);
+    // Fallback to simulated data if real-time fetch fails
     return {
       ticker,
       price: Math.random() * 100 + 100,
@@ -90,16 +92,22 @@ async function checkStockPrice(ticker: string): Promise<StockPrice> {
   }
 }
 
+// Check prices periodically and notify clients
 async function monitorStockPrices() {
   const tickers = new Set<string>();
+
+  // Collect all unique tickers being monitored
   clients.forEach((alerts) => {
     alerts.forEach((alert) => {
       tickers.add(alert.ticker);
     });
   });
 
+  // Check each ticker's price
   Array.from(tickers).forEach(async (ticker) => {
     const price = await checkStockPrice(ticker);
+
+    // Notify relevant clients
     clients.forEach((alerts, client) => {
       alerts.forEach((alert) => {
         if (alert.ticker === ticker) {
@@ -122,40 +130,8 @@ async function monitorStockPrices() {
   });
 }
 
-// Simple prediction using a moving average
-async function predictStockPrices(ticker: string): Promise<{ date: string; predicted: number }[]> {
-    try {
-        const response = await axios.get(
-            `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?range=60d&interval=1d`
-        );
-        if (response.data?.chart?.result?.[0]) {
-            const result = response.data.chart.result[0];
-            const quotes = result.indicators.quote[0];
-            const closingPrices = quotes.close;
-            const predictions = [];
-            //Simple 7 day moving average
-            for (let i = 0; i < 7; i++) {
-                const nextDay = new Date();
-                nextDay.setDate(nextDay.getDate() + i +1);
-                const startIndex = Math.max(0, closingPrices.length - 7);
-                const average = closingPrices.slice(startIndex).reduce((sum, price) => sum + price, 0) / Math.max(7, closingPrices.length);
-                predictions.push({
-                    date: nextDay.toISOString(),
-                    predicted: average
-                });
-            }
-            return predictions;
-        } else {
-            throw new Error('Invalid data format from Yahoo Finance');
-        }
-    } catch (error) {
-        console.error('Error generating predictions:', error);
-        throw error;
-    }
-}
-
-
 export function registerRoutes(app: Express): Server {
+  // Stock data endpoint
   app.get("/api/stock/:ticker", async (req, res) => {
     try {
       const { ticker } = req.params;
@@ -167,6 +143,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // News endpoint
   app.get("/api/news/:ticker", async (req, res) => {
     try {
       const { ticker } = req.params;
@@ -196,9 +173,11 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Analysis endpoint
   app.get("/api/analysis/:ticker", async (req, res) => {
     try {
       const { ticker } = req.params;
+      // Simulate analysis response since Ollama is not available
       const mockAnalysis = {
         sentiment: ["positive", "negative", "neutral"][Math.floor(Math.random() * 3)],
         summary: `Market analysis for ${ticker} based on recent performance and trends.`,
@@ -224,10 +203,11 @@ export function registerRoutes(app: Express): Server {
 
       if (response.data?.chart?.result?.[0]?.meta?.earningsDate) {
         const earningsDate = response.data.chart.result[0].meta.earningsDate;
+        // Get up to 3 upcoming earnings dates
         const dates = Array.isArray(earningsDate) ? 
           earningsDate.slice(0, 3).map((timestamp: number) => ({
             date: new Date(timestamp * 1000).toISOString(),
-            estimate: 'TBD' 
+            estimate: 'TBD'  // Yahoo Finance API doesn't provide EPS estimates in this endpoint
           })) : [];
         res.json(dates);
       } else {
@@ -239,27 +219,21 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/predictions/:ticker", async (req, res) => {
-    try {
-      const { ticker } = req.params;
-      const predictions = await predictStockPrices(ticker);
-      res.json(predictions);
-    } catch (error) {
-      console.error('Error generating predictions:', error);
-      res.status(500).json({ error: "Failed to generate predictions" });
-    }
-  });
 
   const httpServer = createServer(app);
+
+  // Set up WebSocket server
   const wss = new WebSocketServer({ 
     server: httpServer,
     verifyClient: ({ req }: { req: IncomingMessage }) => {
+      // Ignore Vite HMR WebSocket connections
       const protocol = req.headers['sec-websocket-protocol'];
       return !protocol?.includes('vite-hmr');
     }
   });
 
   wss.on('connection', (ws) => {
+    // Initialize client's alerts
     clients.set(ws, new Set());
 
     ws.on('message', (message) => {
@@ -295,11 +269,13 @@ export function registerRoutes(app: Express): Server {
     });
 
     ws.on('close', () => {
+      // Clean up when client disconnects
       clients.delete(ws);
     });
   });
 
-  setInterval(monitorStockPrices, 5000); 
+  // Start monitoring stock prices
+  setInterval(monitorStockPrices, 5000); // Check every 5 seconds
 
   return httpServer;
 }
