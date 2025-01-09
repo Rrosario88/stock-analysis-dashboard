@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   LineChart,
   Line,
@@ -20,17 +19,9 @@ interface PricePredictionProps {
     predicted: number;
   }[];
   isLoading: boolean;
-  onTimeframeChange: (timeframe: string) => void;
-  timeframe: string;
 }
 
-export default function PricePrediction({ 
-  ticker, 
-  predictions, 
-  isLoading,
-  onTimeframeChange,
-  timeframe 
-}: PricePredictionProps) {
+export default function PricePrediction({ ticker, predictions, isLoading }: PricePredictionProps) {
   if (isLoading) {
     return (
       <Card>
@@ -61,17 +52,8 @@ export default function PricePrediction({
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle>Price Predictions</CardTitle>
-        <Select value={timeframe} onValueChange={onTimeframeChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select timeframe" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="monthly">Monthly</SelectItem>
-            <SelectItem value="yearly">Yearly</SelectItem>
-          </SelectContent>
-        </Select>
+      <CardHeader>
+        <CardTitle>Price Predictions (Next 7 Days)</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={400}>
