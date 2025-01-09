@@ -14,6 +14,7 @@ import { fetchStockData, fetchNews, fetchAnalysis, fetchEarningsDates, fetchPred
 
 export default function Dashboard() {
   const [ticker, setTicker] = useState("AAPL");
+  const [timeframe, setTimeframe] = useState("monthly");
 
   const { data: stockData, isLoading: stockLoading } = useQuery({
     queryKey: ["/api/stock", ticker],
@@ -40,8 +41,8 @@ export default function Dashboard() {
   });
 
   const { data: predictions, isLoading: predictionsLoading } = useQuery({
-    queryKey: ["/api/predictions", ticker],
-    queryFn: () => fetchPredictions(ticker),
+    queryKey: ["/api/predictions", ticker, timeframe],
+    queryFn: () => fetchPredictions(ticker, timeframe),
     enabled: !!ticker,
   });
 
@@ -90,6 +91,8 @@ export default function Dashboard() {
             ticker={ticker}
             predictions={predictions}
             isLoading={predictionsLoading}
+            timeframe={timeframe}
+            onTimeframeChange={setTimeframe}
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
