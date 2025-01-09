@@ -1,18 +1,19 @@
 import { Switch, Route } from "wouter";
+import Dashboard from "@/pages/Dashboard";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
-import Dashboard from "@/pages/Dashboard";
 
 function App() {
   return (
-    <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route component={NotFound} />
-    </Switch>
+    <div className="app">
+      <Switch>
+        <Route path="/" component={Dashboard} />
+        <Route component={NotFound} />
+      </Switch>
+    </div>
   );
 }
 
-// fallback 404 not found page
 function NotFound() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
@@ -22,7 +23,6 @@ function NotFound() {
             <AlertCircle className="h-8 w-8 text-red-500" />
             <h1 className="text-2xl font-bold text-gray-900">404 Page Not Found</h1>
           </div>
-
           <p className="mt-4 text-sm text-gray-600">
             Did you forget to add the page to the router?
           </p>
