@@ -32,8 +32,8 @@ export async function fetchEarningsDates(ticker: string) {
   return response.json();
 }
 
-export async function fetchPredictions(ticker: string) {
-  const response = await fetch(`${API_BASE}/predictions/${ticker}`);
+export async function fetchPredictions(ticker: string, timeframe: string = 'monthly') {
+  const response = await fetch(`${API_BASE}/predictions/${ticker}?timeframe=${timeframe}`);
   if (!response.ok) {
     throw new Error('Failed to fetch predictions');
   }
