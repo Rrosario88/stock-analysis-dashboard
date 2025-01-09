@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import axios from "axios";
 import * as cheerio from "cheerio";
+import { WebSocketServer, WebSocket } from "ws";
+import type { IncomingMessage } from "http";
 
 interface OllamaRequest {
   model: string;
@@ -19,9 +21,70 @@ interface NewsItem {
   publishedAt: string;
 }
 
+interface StockAlert {
+  ticker: string;
+  threshold: number;
+  type: 'above' | 'below';
+}
+
+interface StockPrice {
+  ticker: string;
+  price: number;
+  timestamp: string;
+}
+
+const clients = new Map<WebSocket, Set<StockAlert>>();
+
 async function callOllama(request: OllamaRequest) {
   const response = await axios.post("http://localhost:11434/api/generate", request);
   return response.data;
+}
+
+// Simulated price check (in a real app, this would fetch from a real API)
+async function checkStockPrice(ticker: string): Promise<StockPrice> {
+  return {
+    ticker,
+    price: Math.random() * 100 + 100, // Simulate price between 100-200
+    timestamp: new Date().toISOString()
+  };
+}
+
+// Check prices periodically and notify clients
+async function monitorStockPrices() {
+  const tickers = new Set<string>();
+
+  // Collect all unique tickers being monitored
+  clients.forEach((alerts) => {
+    alerts.forEach((alert) => {
+      tickers.add(alert.ticker);
+    });
+  });
+
+  // Check each ticker's price
+  Array.from(tickers).forEach(async (ticker) => {
+    const price = await checkStockPrice(ticker);
+
+    // Notify relevant clients
+    clients.forEach((alerts, client) => {
+      alerts.forEach((alert) => {
+        if (alert.ticker === ticker) {
+          if ((alert.type === 'above' && price.price > alert.threshold) ||
+              (alert.type === 'below' && price.price < alert.threshold)) {
+            client.send(JSON.stringify({
+              type: 'alert',
+              data: {
+                ticker,
+                price: price.price,
+                threshold: alert.threshold,
+                alertType: alert.type,
+                timestamp: price.timestamp
+              }
+            }));
+          }
+        }
+      });
+    });
+  });
 }
 
 export function registerRoutes(app: Express): Server {
@@ -98,5 +161,61 @@ export function registerRoutes(app: Express): Server {
   });
 
   const httpServer = createServer(app);
+
+  // Set up WebSocket server
+  const wss = new WebSocketServer({ 
+    server: httpServer,
+    verifyClient: ({ req }: { req: IncomingMessage }) => {
+      // Ignore Vite HMR WebSocket connections
+      const protocol = req.headers['sec-websocket-protocol'];
+      return !protocol?.includes('vite-hmr');
+    }
+  });
+
+  wss.on('connection', (ws) => {
+    // Initialize client's alerts
+    clients.set(ws, new Set());
+
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+
+        switch (data.type) {
+          case 'subscribe': {
+            const alerts = clients.get(ws)!;
+            alerts.add({
+              ticker: data.ticker,
+              threshold: data.threshold,
+              type: data.alertType
+            });
+            break;
+          }
+
+          case 'unsubscribe': {
+            const currentAlerts = clients.get(ws)!;
+            Array.from(currentAlerts).forEach((alert) => {
+              if (alert.ticker === data.ticker &&
+                  alert.threshold === data.threshold &&
+                  alert.type === data.alertType) {
+                currentAlerts.delete(alert);
+              }
+            });
+            break;
+          }
+        }
+      } catch (error) {
+        console.error('Error processing WebSocket message:', error);
+      }
+    });
+
+    ws.on('close', () => {
+      // Clean up when client disconnects
+      clients.delete(ws);
+    });
+  });
+
+  // Start monitoring stock prices
+  setInterval(monitorStockPrices, 5000); // Check every 5 seconds
+
   return httpServer;
 }
