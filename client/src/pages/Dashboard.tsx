@@ -7,6 +7,7 @@ import { Search } from "lucide-react";
 import StockChart from "@/components/StockChart";
 import NewsTimeline from "@/components/NewsTimeline";
 import AnalysisCard from "@/components/AnalysisCard";
+import PriceAlerts from "@/components/PriceAlerts"; // Added import
 import { fetchStockData, fetchNews, fetchAnalysis } from "@/lib/api";
 
 export default function Dashboard() {
@@ -70,14 +71,18 @@ export default function Dashboard() {
             </Card>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent News</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <NewsTimeline news={newsData} isLoading={newsLoading} />
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <PriceAlerts ticker={ticker} />
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent News</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <NewsTimeline news={newsData} isLoading={newsLoading} />
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>
