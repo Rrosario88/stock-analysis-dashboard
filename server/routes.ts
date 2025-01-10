@@ -199,16 +199,17 @@ export function registerRoutes(app: Express): Server {
     try {
       const { ticker } = req.params;
       const symbol = ticker.toUpperCase();
-      const response = await axios.get(`https://query1.finance.yahoo.com/v8/finance/quoteSummary/${symbol}?modules=summaryProfile`);
+      const API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
+      const response = await axios.get(`https://www.alphavantage.co/query?function=OVERVIEW&symbol=${symbol}&apikey=${API_KEY}`);
       
-      const profile = response.data?.quoteSummary?.result?.[0]?.summaryProfile;
-      if (profile) {
+      const data = response.data;
+      if (data) {
         res.json({
-          name: profile.website ? profile.website.split('.')[1] : symbol,
-          sector: profile.sector || 'N/A',
-          industry: profile.industry || 'N/A',
-          marketCap: profile.marketCap || 'N/A',
-          website: profile.website || 'N/A'
+          name: data.Name || symbol,
+          sector: data.Sector || 'N/A',
+          industry: data.Industry || 'N/A',
+          marketCap: data.MarketCapitalization ? `$${Number(data.MarketCapitalization).toLocaleString()}` : 'N/A',
+          website: data.Address || 'N/A'
         });
       } else {
         throw new Error('No company data available');
