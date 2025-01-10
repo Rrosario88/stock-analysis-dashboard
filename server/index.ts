@@ -54,7 +54,7 @@ app.use((req, res, next) => {
   }
 
   // Changed port from 5000 to 3000 to avoid conflicts with macOS Control Center
-  const PORT = 3001;
+  const PORT = 3000;
   server.listen(PORT, "0.0.0.0", () => {
     log(`Server running at http://localhost:${PORT}`);
   });
