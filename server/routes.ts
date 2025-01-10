@@ -200,34 +200,42 @@ export function registerRoutes(app: Express): Server {
       const { ticker } = req.params;
       const symbol = ticker.toUpperCase();
       const API_KEY = 'cu08ae1r01ql96gq0tb0cu08ae1r01ql96gq0tbg';
-      
+
       console.log(`Fetching data for symbol: ${symbol}`);
-      
-      const [profileResponse, metricsResponse] = await Promise.all([
-        axios.get(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${API_KEY}`),
-        axios.get(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${API_KEY}`)
-      ]);
-      
-      if (!profileResponse.data || Object.keys(profileResponse.data).length === 0) {
-        throw new Error('Invalid ticker symbol or no data available');
+
+      try {
+        const profileResponse = await axios.get(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${API_KEY}`);
+        const metricsResponse = await axios.get(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${API_KEY}`);
+
+        console.log('Profile Response:', profileResponse.data);
+        console.log('Metrics Response:', metricsResponse.data);
+
+        if (!profileResponse.data || Object.keys(profileResponse.data).length === 0) {
+          throw new Error('No company profile data available');
+        }
+
+        const profile = profileResponse.data;
+        const metrics = metricsResponse.data?.metric || {};
+
+        const companyInfo = {
+          name: profile.name || symbol,
+          sector: profile.finnhubIndustry || 'N/A',
+          industry: profile.finnhubIndustry || 'N/A',
+          marketCap: profile.marketCapitalization ? 
+            `$${(profile.marketCapitalization * 1_000_000).toLocaleString()}` : 'N/A',
+          website: profile.weburl || 'N/A',
+          dividendYield: metrics?.dividendYieldIndicatedAnnual ? 
+            `${Number(metrics.dividendYieldIndicatedAnnual).toFixed(2)}%` : 'N/A',
+          dividendDate: metrics?.nextDividendDate || 'N/A'
+        };
+
+        console.log('Processed Company Info:', companyInfo);
+        res.json(companyInfo);
+
+      } catch (error) {
+        console.error('Finnhub API Error:', error.response?.data || error.message);
+        res.status(500).json({ error: "Failed to fetch company info" });
       }
-      
-      const profile = profileResponse.data;
-      const metrics = metricsResponse.data.metric || {};
-      
-      const companyInfo = {
-        name: profile.name || symbol,
-        sector: profile.finnhubIndustry || 'N/A',
-        industry: profile.finnhubIndustry || 'N/A',
-        marketCap: profile.marketCapitalization ? 
-          `$${(profile.marketCapitalization * 1000000).toLocaleString()}` : 'N/A',
-        website: profile.weburl || 'N/A',
-        dividendYield: metrics.dividendYieldIndicatedAnnual ? 
-          `${(Number(metrics.dividendYieldIndicatedAnnual)).toFixed(2)}%` : 'N/A',
-        dividendDate: metrics.nextDividendDate || 'N/A'
-      };
-      
-      res.json(companyInfo);
     } catch (error) {
       console.error('Error fetching company info:', error);
       res.status(500).json({ error: "Failed to fetch company info" });
