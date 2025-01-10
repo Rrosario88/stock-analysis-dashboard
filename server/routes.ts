@@ -203,13 +203,14 @@ export function registerRoutes(app: Express): Server {
       const response = await axios.get(`https://www.alphavantage.co/query?function=OVERVIEW&symbol=${symbol}&apikey=${API_KEY}`);
       
       const data = response.data;
-      if (data) {
+      // Check if we have data and it's not an error message
+      if (data && !data['Error Message']) {
         res.json({
-          name: data.Name || symbol,
-          sector: data.Sector || 'N/A',
-          industry: data.Industry || 'N/A',
-          marketCap: data.MarketCapitalization ? `$${Number(data.MarketCapitalization).toLocaleString()}` : 'N/A',
-          website: data.Address || 'N/A'
+          name: data['Name'] || symbol,
+          sector: data['Sector'] || 'N/A',
+          industry: data['Industry'] || 'N/A',
+          marketCap: data['MarketCapitalization'] ? `$${Number(data['MarketCapitalization']).toLocaleString()}` : 'N/A',
+          website: data['Address'] || 'N/A'
         });
       } else {
         throw new Error('No company data available');
