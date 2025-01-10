@@ -39,3 +39,6 @@ vite.config.ts.*
 *.log
 .cache
 *.tar.gz
+
+# Google App Engine generated folder
+appengine-generated/

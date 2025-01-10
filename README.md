@@ -39,8 +39,8 @@ A comprehensive financial analysis platform that combines real-time stock data w
 
 1. Clone the repository:
 ```bash
-git clone [your-repo-url]
-cd stock-analysis-platform
+git clone https://github.com/Rrosario88/stock-analysis-dashboard.git
+cd stock-analysis-dashboard
 ```
 
 2. Install dependencies:
@@ -76,10 +76,6 @@ The application will be available at `http://localhost:5000`.
 5. **Earnings Tracking:**
    - View upcoming earnings call dates
    - Track estimated earnings per share
-
-## Screenshots
-
-[Coming soon]
 
 ## Contributing
 
