@@ -31,3 +31,11 @@ export async function fetchEarningsDates(ticker: string) {
   }
   return response.json();
 }
+
+export async function fetchCompanyInfo(ticker: string) {
+  const response = await fetch(`${API_BASE}/company/${ticker}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch company info');
+  }
+  return response.json();
+}

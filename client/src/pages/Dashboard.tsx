@@ -9,6 +9,7 @@ import NewsTimeline from "@/components/NewsTimeline";
 import AnalysisCard from "@/components/AnalysisCard";
 import PriceAlerts from "@/components/PriceAlerts";
 import EarningsDates from "@/components/EarningsDates";
+import CompanyInfo from "@/components/CompanyInfo";
 import { fetchStockData, fetchNews, fetchAnalysis, fetchEarningsDates } from "@/lib/api";
 
 export default function Dashboard() {
@@ -35,6 +36,12 @@ export default function Dashboard() {
   const { data: earningsDates, isLoading: earningsLoading } = useQuery({
     queryKey: ["/api/earnings", ticker],
     queryFn: () => fetchEarningsDates(ticker),
+    enabled: !!ticker,
+  });
+
+  const { data: companyInfo, isLoading: companyLoading } = useQuery({
+    queryKey: ["/api/company", ticker],
+    queryFn: () => fetchCompanyInfo(ticker),
     enabled: !!ticker,
   });
 
@@ -70,7 +77,12 @@ export default function Dashboard() {
               </Card>
             </div>
 
-            <div>
+            <div className="space-y-8">
+              <CompanyInfo
+                ticker={ticker}
+                info={companyInfo}
+                isLoading={companyLoading}
+              />
               <EarningsDates 
                 ticker={ticker}
                 dates={earningsDates}
