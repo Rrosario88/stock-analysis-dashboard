@@ -203,23 +203,25 @@ export function registerRoutes(app: Express): Server {
       const response = await axios.get(`https://www.alphavantage.co/query?function=OVERVIEW&symbol=${symbol}&apikey=${API_KEY}`);
       
       const data = response.data;
-      console.log('Alpha Vantage response:', data);
+      console.log('Alpha Vantage API response for', symbol, ':', data);
 
-      // Check for API limit message
       if (data && data["Note"]) {
+        console.error('API limit reached:', data["Note"]);
         throw new Error(data["Note"]);
       }
-      
-      if (data && Object.keys(data).length > 0) {
-        res.json({
+
+      if (data && data["Symbol"]) {
+        const companyInfo = {
           name: data["Name"] || symbol,
           sector: data["Sector"] || 'N/A',
           industry: data["Industry"] || 'N/A',
           marketCap: data["MarketCapitalization"] ? `$${Number(data["MarketCapitalization"]).toLocaleString()}` : 'N/A',
-          website: data["Description"] || data["Address"] || 'N/A'
-        });
+          website: data["Description"] || 'N/A'
+        };
+        console.log('Sending company info:', companyInfo);
+        res.json(companyInfo);
       } else {
-        console.error('Empty or invalid response from Alpha Vantage');
+        console.error('Invalid or empty response for symbol:', symbol);
         throw new Error('No company data available');
       }
     } catch (error) {
