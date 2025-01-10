@@ -45,11 +45,7 @@ export default function CompanyInfo({ ticker, info, isLoading }: CompanyInfoProp
           <p><strong>Sector:</strong> {info?.sector || 'N/A'}</p>
           <p><strong>Industry:</strong> {info?.industry || 'N/A'}</p>
           <p><strong>Market Cap:</strong> {info?.marketCap || 'N/A'}</p>
-          <p><strong>Website:</strong> {info?.website ? (
-            <a href={info.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-              {info.website}
-            </a>
-          ) : 'N/A'}</p>
+          <p><strong>Website:</strong> {info?.website || 'N/A'}</p>
         </div>
       </CardContent>
     </Card>
