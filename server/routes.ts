@@ -195,6 +195,30 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.get("/api/company/:ticker", async (req, res) => {
+    try {
+      const { ticker } = req.params;
+      const symbol = ticker.toUpperCase();
+      const response = await axios.get(`https://query1.finance.yahoo.com/v8/finance/quoteSummary/${symbol}?modules=summaryProfile`);
+      
+      const profile = response.data?.quoteSummary?.result?.[0]?.summaryProfile;
+      if (profile) {
+        res.json({
+          name: profile.website ? profile.website.split('.')[1] : symbol,
+          sector: profile.sector || 'N/A',
+          industry: profile.industry || 'N/A',
+          marketCap: profile.marketCap || 'N/A',
+          website: profile.website || 'N/A'
+        });
+      } else {
+        throw new Error('No company data available');
+      }
+    } catch (error) {
+      console.error('Error fetching company info:', error);
+      res.status(500).json({ error: "Failed to fetch company info" });
+    }
+  });
+
   app.get("/api/earnings/:ticker", async (req, res) => {
     try {
       const { ticker } = req.params;
