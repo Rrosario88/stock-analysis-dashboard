@@ -211,7 +211,15 @@ export function registerRoutes(app: Express): Server {
         console.log('Metrics Response:', metricsResponse.data);
 
         if (!profileResponse.data || Object.keys(profileResponse.data).length === 0) {
-          throw new Error('No company profile data available');
+          return res.json({
+            name: symbol,
+            sector: 'N/A',
+            industry: 'N/A',
+            marketCap: 'N/A',
+            website: 'N/A',
+            dividendYield: 'N/A',
+            dividendDate: 'N/A'
+          });
         }
 
         const profile = profileResponse.data;
