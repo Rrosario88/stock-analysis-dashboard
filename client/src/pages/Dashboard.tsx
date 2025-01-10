@@ -9,7 +9,8 @@ import NewsTimeline from "@/components/NewsTimeline";
 import AnalysisCard from "@/components/AnalysisCard";
 import PriceAlerts from "@/components/PriceAlerts";
 import EarningsDates from "@/components/EarningsDates";
-import { fetchStockData, fetchNews, fetchAnalysis, fetchEarningsDates } from "@/lib/api";
+import { fetchStockData, fetchNews, fetchAnalysis, fetchEarningsDates, fetchCompanyInfo } from "@/lib/api";
+import CompanyInfo from "@/components/CompanyInfo";
 
 export default function Dashboard() {
   const [ticker, setTicker] = useState("AAPL");
@@ -17,6 +18,12 @@ export default function Dashboard() {
   const { data: stockData, isLoading: stockLoading } = useQuery({
     queryKey: ["/api/stock", ticker],
     queryFn: () => fetchStockData(ticker),
+    enabled: !!ticker,
+  });
+
+  const { data: companyInfo, isLoading: companyLoading } = useQuery({
+    queryKey: ["/api/company", ticker],
+    queryFn: () => fetchCompanyInfo(ticker),
     enabled: !!ticker,
   });
 
@@ -60,6 +67,11 @@ export default function Dashboard() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
+              <CompanyInfo
+                ticker={ticker}
+                info={companyInfo}
+                isLoading={companyLoading}
+              />
               <Card>
                 <CardHeader>
                   <CardTitle>Price History</CardTitle>
