@@ -201,35 +201,30 @@ export function registerRoutes(app: Express): Server {
       const symbol = ticker.toUpperCase();
       const API_KEY = 'cu08ae1r01ql96gq0tb0cu08ae1r01ql96gq0tbg';
       
-      const API_KEY = 'cu08ae1r01ql96gq0tb0cu08ae1r01ql96gq0tbg';
-      
       console.log(`Fetching data for symbol: ${symbol}`);
       
-      const profileResponse = await axios.get(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${API_KEY}`);
-      console.log('Profile Response:', profileResponse.data);
+      const [profileResponse, metricsResponse] = await Promise.all([
+        axios.get(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${API_KEY}`),
+        axios.get(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${API_KEY}`)
+      ]);
       
-      const metricsResponse = await axios.get(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${API_KEY}`);
-      console.log('Metrics Response:', metricsResponse.data);
-      
-      const data = {
-        profile: profileResponse.data,
-        metrics: metricsResponse.data.metric || {}
-      };
-      
-      if (!data.profile || Object.keys(data.profile).length === 0) {
-        throw new Error('No profile data received from Finnhub');
+      if (!profileResponse.data || Object.keys(profileResponse.data).length === 0) {
+        throw new Error('Invalid ticker symbol or no data available');
       }
       
+      const profile = profileResponse.data;
+      const metrics = metricsResponse.data.metric || {};
+      
       const companyInfo = {
-        name: data.profile.name || symbol,
-        sector: data.profile.finnhubIndustry || 'N/A',
-        industry: data.profile.finnhubIndustry || 'N/A',
-        marketCap: data.profile.marketCapitalization ? 
-          `$${(data.profile.marketCapitalization * 1000000).toLocaleString()}` : 'N/A',
-        website: data.profile.weburl || 'N/A',
-        dividendYield: data.metrics?.dividendYieldIndicatedAnnual ? 
-          `${(Number(data.metrics.dividendYieldIndicatedAnnual)).toFixed(2)}%` : 'N/A',
-        dividendDate: data.metrics?.nextDividendDate || 'N/A'
+        name: profile.name || symbol,
+        sector: profile.finnhubIndustry || 'N/A',
+        industry: profile.finnhubIndustry || 'N/A',
+        marketCap: profile.marketCapitalization ? 
+          `$${(profile.marketCapitalization * 1000000).toLocaleString()}` : 'N/A',
+        website: profile.weburl || 'N/A',
+        dividendYield: metrics.dividendYieldIndicatedAnnual ? 
+          `${(Number(metrics.dividendYieldIndicatedAnnual)).toFixed(2)}%` : 'N/A',
+        dividendDate: metrics.nextDividendDate || 'N/A'
       };
       
       res.json(companyInfo);
