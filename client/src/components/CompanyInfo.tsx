@@ -8,6 +8,8 @@ interface CompanyInfo {
   industry: string;
   marketCap: string;
   website: string;
+  dividendYield: string;
+  dividendDate: string;
 }
 
 interface CompanyInfoProps {

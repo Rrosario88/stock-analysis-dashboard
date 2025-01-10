@@ -199,31 +199,22 @@ export function registerRoutes(app: Express): Server {
     try {
       const { ticker } = req.params;
       const symbol = ticker.toUpperCase();
-      const API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
+      const API_KEY = 'cu08ae1r01ql96gq0tb0cu08ae1r01ql96gq0tbg';
       
-      if (!API_KEY) {
-        throw new Error('Alpha Vantage API key not configured');
-      }
-
-      const response = await axios.get(`https://www.alphavantage.co/query?function=OVERVIEW&symbol=${symbol}&apikey=${API_KEY}`);
+      const response = await axios.get(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${API_KEY}`);
       const data = response.data;
       
-      console.log('Alpha Vantage API response:', data);
+      console.log('Finnhub API response:', data);
 
-      // Check for API limit message
-      if (data && data["Note"]) {
-        throw new Error(data["Note"]);
-      }
-
-      // Return company info even if some fields are missing
+      // Return company info
       const companyInfo = {
-        name: data["Name"] || symbol,
-        sector: data["Sector"] || 'N/A',
-        industry: data["Industry"] || 'N/A',
-        marketCap: data["MarketCapitalization"] ? `$${Number(data["MarketCapitalization"]).toLocaleString()}` : 'N/A',
-        website: data["Description"] || 'N/A',
-        dividendYield: data["DividendYield"] ? `${(Number(data["DividendYield"]) * 100).toFixed(2)}%` : 'N/A',
-        dividendDate: data["DividendDate"] || 'N/A'
+        name: data.name || symbol,
+        sector: data.finnhubIndustry || 'N/A',
+        industry: data.finnhubIndustry || 'N/A',
+        marketCap: data.marketCapitalization ? `$${(data.marketCapitalization * 1000000).toLocaleString()}` : 'N/A',
+        website: data.weburl || 'N/A',
+        dividendYield: data.dividendYield ? `${(data.dividendYield).toFixed(2)}%` : 'N/A',
+        dividendDate: 'N/A' // Finnhub doesn't provide this directly
       };
       
       res.json(companyInfo);
