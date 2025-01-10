@@ -201,8 +201,15 @@ export function registerRoutes(app: Express): Server {
       const symbol = ticker.toUpperCase();
       const API_KEY = 'cu08ae1r01ql96gq0tb0cu08ae1r01ql96gq0tbg';
       
-      const response = await axios.get(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${API_KEY}`);
-      const data = response.data;
+      const [profileResponse, metricsResponse] = await Promise.all([
+        axios.get(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${API_KEY}`),
+        axios.get(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${API_KEY}`)
+      ]);
+      
+      const data = {
+        ...profileResponse.data,
+        metric: metricsResponse.data.metric
+      };
       
       console.log('Finnhub API response:', data);
 
@@ -215,10 +222,10 @@ export function registerRoutes(app: Express): Server {
         name: data.name || symbol,
         sector: data.finnhubIndustry || 'N/A',
         industry: data.finnhubIndustry || 'N/A',
-        marketCap: data.marketCapitalization ? `$${(data.marketCapitalization * 1000000).toLocaleString()}` : 'N/A',
+        marketCap: data.marketCapitalization ? `$${(data.marketCapitalization).toLocaleString()}` : 'N/A',
         website: data.weburl || 'N/A',
-        dividendYield: data.dividendYield ? `${(Number(data.dividendYield) * 100).toFixed(2)}%` : 'N/A',
-        dividendDate: data.nextDividendDate || 'N/A'
+        dividendYield: data.metric?.dividendYieldIndicatedAnnual ? `${(Number(data.metric.dividendYieldIndicatedAnnual)).toFixed(2)}%` : 'N/A',
+        dividendDate: data.metric?.nextDividendDate || 'N/A'
       };
       
       res.json(companyInfo);
