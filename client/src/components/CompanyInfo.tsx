@@ -8,8 +8,6 @@ interface CompanyInfo {
   industry: string;
   marketCap: string;
   website: string;
-  dividendYield: string;
-  dividendDate: string;
 }
 
 interface CompanyInfoProps {
@@ -48,8 +46,6 @@ export default function CompanyInfo({ ticker, info, isLoading }: CompanyInfoProp
           <p><strong>Industry:</strong> {info?.industry || 'N/A'}</p>
           <p><strong>Market Cap:</strong> {info?.marketCap || 'N/A'}</p>
           <p><strong>Website:</strong> {info?.website || 'N/A'}</p>
-          <p><strong>Dividend Yield:</strong> {info?.dividendYield || 'N/A'}</p>
-          <p><strong>Next Dividend Date:</strong> {info?.dividendDate || 'N/A'}</p>
         </div>
       </CardContent>
     </Card>
