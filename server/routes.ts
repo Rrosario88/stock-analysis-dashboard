@@ -207,14 +207,18 @@ export function registerRoutes(app: Express): Server {
       console.log('Finnhub API response:', data);
 
       // Return company info
+      if (!data || Object.keys(data).length === 0) {
+        throw new Error('No data received from Finnhub');
+      }
+      
       const companyInfo = {
         name: data.name || symbol,
         sector: data.finnhubIndustry || 'N/A',
         industry: data.finnhubIndustry || 'N/A',
         marketCap: data.marketCapitalization ? `$${(data.marketCapitalization * 1000000).toLocaleString()}` : 'N/A',
         website: data.weburl || 'N/A',
-        dividendYield: data.dividendYield ? `${(data.dividendYield).toFixed(2)}%` : 'N/A',
-        dividendDate: 'N/A' // Finnhub doesn't provide this directly
+        dividendYield: data.dividendYield ? `${(Number(data.dividendYield) * 100).toFixed(2)}%` : 'N/A',
+        dividendDate: data.nextDividendDate || 'N/A'
       };
       
       res.json(companyInfo);
