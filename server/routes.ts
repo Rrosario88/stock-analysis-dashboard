@@ -200,28 +200,27 @@ export function registerRoutes(app: Express): Server {
       const { ticker } = req.params;
       const symbol = ticker.toUpperCase();
       const API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
-      const API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
-      if (!API_KEY) {
-        throw new Error('Alpha Vantage API key not found');
-      }
-      
       const response = await axios.get(`https://www.alphavantage.co/query?function=OVERVIEW&symbol=${symbol}&apikey=${API_KEY}`);
+      
       const data = response.data;
-      
-      console.log('Alpha Vantage response:', JSON.stringify(data, null, 2));
+      console.log('Alpha Vantage API response for', symbol, ':', data);
 
-      // Return company info even if some fields are missing
-      const companyInfo = {
-        name: data.Name || symbol,
-        sector: data.Sector || 'N/A',
-        industry: data.Industry || 'N/A',
-        marketCap: data.MarketCapitalization ? `$${Number(data.MarketCapitalization).toLocaleString()}` : 'N/A',
-        website: data.Description || 'N/A'
-      };
-      
-      console.log('Sending company info:', companyInfo);
-      res.json(companyInfo);
-    } else {
+      if (data && data["Note"]) {
+        console.error('API limit reached:', data["Note"]);
+        throw new Error(data["Note"]);
+      }
+
+      if (data && data["Symbol"]) {
+        const companyInfo = {
+          name: data["Name"] || symbol,
+          sector: data["Sector"] || 'N/A',
+          industry: data["Industry"] || 'N/A',
+          marketCap: data["MarketCapitalization"] ? `$${Number(data["MarketCapitalization"]).toLocaleString()}` : 'N/A',
+          website: data["Description"] || 'N/A'
+        };
+        console.log('Sending company info:', companyInfo);
+        res.json(companyInfo);
+      } else {
         console.error('Invalid or empty response for symbol:', symbol);
         throw new Error('No company data available');
       }
