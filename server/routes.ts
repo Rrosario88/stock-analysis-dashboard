@@ -203,15 +203,20 @@ export function registerRoutes(app: Express): Server {
       const response = await axios.get(`https://www.alphavantage.co/query?function=OVERVIEW&symbol=${symbol}&apikey=${API_KEY}`);
       
       const data = response.data;
-      console.log('Alpha Vantage response:', data); // Debug logging
+      console.log('Alpha Vantage response:', data);
+
+      // Check for API limit message
+      if (data && data["Note"]) {
+        throw new Error(data["Note"]);
+      }
       
       if (data && Object.keys(data).length > 0) {
         res.json({
-          name: data.Name || symbol,
-          sector: data.Sector || 'N/A',
-          industry: data.Industry || 'N/A',
-          marketCap: data.MarketCapitalization ? `$${Number(data.MarketCapitalization).toLocaleString()}` : 'N/A',
-          website: data.Description || 'N/A'
+          name: data["Name"] || symbol,
+          sector: data["Sector"] || 'N/A',
+          industry: data["Industry"] || 'N/A',
+          marketCap: data["MarketCapitalization"] ? `$${Number(data["MarketCapitalization"]).toLocaleString()}` : 'N/A',
+          website: data["Description"] || data["Address"] || 'N/A'
         });
       } else {
         console.error('Empty or invalid response from Alpha Vantage');
