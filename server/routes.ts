@@ -221,7 +221,9 @@ export function registerRoutes(app: Express): Server {
         sector: data["Sector"] || 'N/A',
         industry: data["Industry"] || 'N/A',
         marketCap: data["MarketCapitalization"] ? `$${Number(data["MarketCapitalization"]).toLocaleString()}` : 'N/A',
-        website: data["Address"] || 'N/A'
+        website: data["Description"] || 'N/A',
+        dividendYield: data["DividendYield"] ? `${(Number(data["DividendYield"]) * 100).toFixed(2)}%` : 'N/A',
+        dividendDate: data["DividendDate"] || 'N/A'
       };
       
       res.json(companyInfo);
